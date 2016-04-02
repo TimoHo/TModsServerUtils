@@ -1,0 +1,94 @@
+name: TModsServerUtils
+main: me.tmods.serverutils.main
+version: 2.6
+author: Timo Hocker
+website: http://timosmods.weebly.com
+
+loadbefore:
+  - TmodsServerAddons_Wands
+  - TModsServerAddons_Crates
+  - TModsServerAddons_DoubleJump
+  - TModsServerAddons_Broadcaster
+  - TModsServerAddons_HealthIndicator
+  - TModsServerAddons_Customiser
+  - TModsServerAddons_Warps
+  - TModsServerAddons_Regions
+  - TModsServerAddons_Ranks
+  - TModsServerAddons_InfiniteFlight
+
+commands:
+     e:
+          description: toggle save mode
+          usage: /e
+     bp:
+          description: open your backpack
+          usage: /bp
+     getAlert:
+          description: get the state of the save mode
+          usage: /getAlert
+     permission:
+          description: manage the permissions of someone
+          usage: /permission <add/remove/get> <player> [permission]
+          aliases: perm
+     home:
+          description: teleport home
+          usage: /home [name\list\delete] [name to delete]
+     sethome: 
+          description: set your home
+          usage: /sethome [name]
+     trash:
+          description: throw something away
+          usage: /trash
+     inv:
+          description: look in the inventory of others
+          usage: /inv <player>
+     enderinv:
+          description: look in the enderchest of others
+          usage: /enderinv <player>
+     bal:
+          description: shows you how much money you have
+          usage: /bal
+     pay:
+          description: pay money to other players
+          usage: /pay <player> <amount>
+     setMoney:
+          description: set someones money
+          usage: /setMoney <player> <amount>
+     shop:
+          description: all economy shop commands
+          usage: /shop <list/open/create/cost> [shop] [itemSlot] [cost]
+     recipe:
+          description: create your own craftion recipes!
+          usage: /recipe [create/remove]
+     suban:
+          description: ban someones ip name and uuid forever
+          usage: /suban ban/unban [Player]
+     setspawn:
+          description: set the servers spawn
+          usage: /setspawn
+     spawn:
+          description: warp to the server spawn
+          usage: /spawn
+          
+          
+Permissions:
+     ServerUtils.joinOnSecure
+     ServerUtils.inv
+     ServerUtils.enderinv
+     ServerUtils.trash
+     ServerUtils.home
+     ServerUtils.multihome
+     ServerUtils.setAlert
+     ServerUtils.backpack
+     ServerUtils.Permissions.get
+     ServerUtils.Permissions.manage
+     ServerUtils.economy.bal
+     ServerUtils.economy.pay
+     Serverutils.economy.set
+     ServerUtils.economy.manageShop
+     ServerUtils.economy.buyShop
+     ServerUtils.recipe
+     ServerUtils.build
+     ServerUtils.suban
+     ServerUtils.warpSpawn
+     ServerUtils.setSpawn

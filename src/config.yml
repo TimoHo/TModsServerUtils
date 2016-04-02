@@ -1,0 +1,41 @@
+# The save mode can be toggled with /e
+alert: false
+
+language: EN
+
+showMobHealth: true
+
+clearLag: true
+clearCooldown: 60
+clearLagBroadcast: true
+
+TeleportToSpawnOnJoin: false
+
+EnableRegionDisplay: true
+
+broadcasterDelay: 3
+
+broadcastBlockBreak:
+  IRON_ORE: true
+  DIAMOND_ORE: true
+  COAL_ORE: true
+  GOLD_ORE: true
+  LAPIS_ORE: true
+  OBSIDIAN: true
+  PUMPKIN: true
+  GLOWSTONE: true
+  EMERALD_ORE: true
+
+broadcastEntityDamage:
+  Pig: false
+  Sheep: false
+  Villager: true
+  Enderdragon: true
+  Bunny: true
+  Bat: true
+
+allowFallDamage: true
+
+allowDoubleJump: false
+doubleJumpUp: 0.5
+doubleJumpForward: 1.5

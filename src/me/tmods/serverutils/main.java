@@ -696,8 +696,12 @@ public class main extends JavaPlugin implements Listener{
 				if (args.length == 1) {
 					if (args[0].equalsIgnoreCase("list")) {
 						sender.sendMessage("------- " + Methods.getLang("homeof") + sender.getName() + " -------");
-						for(String s:cfg.getConfigurationSection(Bukkit.getPlayer(sender.getName()).getUniqueId() + ".home").getKeys(false)) {
-							sender.sendMessage(s);
+						if (cfg.getConfigurationSection(((Player) sender).getUniqueId() + ".home") != null) {
+							if (cfg.getConfigurationSection(((Player) sender).getUniqueId() + ".home").getKeys(false).size() > 0) {
+								for(String s:cfg.getConfigurationSection(Bukkit.getPlayer(sender.getName()).getUniqueId() + ".home").getKeys(false)) {
+									sender.sendMessage(s);
+								}
+							}
 						}
 						sender.sendMessage("-------------------------------------------");
 						return true;

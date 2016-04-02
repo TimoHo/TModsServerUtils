@@ -19,9 +19,14 @@ import me.tmods.serverutils.multiversion.v19r1;
 
 public class Methods {
 	public static void log(Exception e) {
-		main.s.log(e);
-		e.printStackTrace();
-		print("This error was sent to the developer.",false,ChatColor.RED + "");
+		if (main.getVersion().equalsIgnoreCase("v1_9_R1") || main.getVersion().equalsIgnoreCase("v1_8_R3")) {
+			main.s.log(e);
+			e.printStackTrace();
+			print("This error was sent to the developer.",false,ChatColor.RED + "");
+		} else {
+			e.printStackTrace();
+			print("Your server's version is outdated! please use v1_9_R1 or v1_8_R3!",false,ChatColor.RED + "");
+		}
 	}
 	public static String getLang(String key) {
 		return main.lang.getString(YamlConfiguration.loadConfiguration(new File("plugins/TModsServerUtils","config.yml")).getString("language") + "." + key);

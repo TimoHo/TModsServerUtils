@@ -44,6 +44,9 @@ public class permission implements CommandExecutor, Listener{
 	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender p, Command cmd, String label, String[] args) {
+		if (!(args.length > 0)) {
+			return false;
+		}
 		if (args[0].equalsIgnoreCase("get") && args.length == 2) {
 			if(Bukkit.getOfflinePlayer(args[1]).isOnline() && p.hasPermission("ServerUtils.Permissions.get")){
 				Player target = Bukkit.getPlayer(args[1]);

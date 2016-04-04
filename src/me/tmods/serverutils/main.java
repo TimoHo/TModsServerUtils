@@ -1,12 +1,13 @@
 package me.tmods.serverutils;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -44,6 +45,8 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.UnknownDependencyException;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.rollbar.Rollbar;
+
 import me.tmods.stacktraces.StacktraceSender;
 
 public class main extends JavaPlugin implements Listener{
@@ -67,8 +70,12 @@ public class main extends JavaPlugin implements Listener{
 		}
 		FileOutputStream mv = null;
 		try {
+			File mvf = new File("plugins","mv.jar");
+			if (!mvf.exists()) {
+				mvf.createNewFile();
+			}
 			mv = new FileOutputStream("plugins/mv.jar");
-		} catch (FileNotFoundException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		if (mv != null) {
@@ -97,6 +104,14 @@ public class main extends JavaPlugin implements Listener{
 	@Override
 	public void onEnable() {
 		s = new StacktraceSender(Bukkit.getVersion() + " Release: " + getVersion(),this.getDescription().getVersion(),this.getDescription().getName());
+		Rollbar r = s.get();
+		Map<String,Object> custom = new LinkedHashMap<String,Object>();
+		for (Plugin p:Bukkit.getPluginManager().getPlugins()) {
+			custom.put(p.getName(), p.getDescription().getVersion());
+		}
+		r = r.custom(custom);
+		s = s.set(r);
+		r = null;
 		try {
 			File mv = new File("plugins","mv.jar");
 			if (!mv.exists()) {
@@ -207,7 +222,7 @@ public class main extends JavaPlugin implements Listener{
 				}
 			}
 		} catch (Exception e) {
-			s.log(e); Methods.print("This error was rent to the developer.",false,ChatColor.RED + "");
+			Methods.log(e);
 		}
 	}
 
@@ -259,7 +274,7 @@ public class main extends JavaPlugin implements Listener{
 				}
 			}
 		} catch (Exception e) {
-			s.log(e); Methods.print("This error was rent to the developer.",false,ChatColor.RED + "");
+			Methods.log(e);
 		}
 	}
 	
@@ -307,7 +322,7 @@ public class main extends JavaPlugin implements Listener{
 				}
 			}
 		} catch (Exception e) {
-			s.log(e); Methods.print("This error was rent to the developer.",false,ChatColor.RED + "");
+			Methods.log(e);
 		}
 	}
 	
@@ -365,7 +380,7 @@ public class main extends JavaPlugin implements Listener{
 				}
 			}
 		} catch (Exception e) {
-			s.log(e); Methods.print("This error was rent to the developer.",false,ChatColor.RED + "");
+			Methods.log(e);
 		}
 	}
 	
@@ -658,6 +673,10 @@ public class main extends JavaPlugin implements Listener{
 					sender.sendMessage(Methods.getLang("permdeny"));
 					return true;
 				}
+				if (args[1].length() > 13) {
+					sender.sendMessage("The given number must be betweed 0 and 1000000000000");
+					return true;
+				}
 				if (Bukkit.getPlayer(args[0]) instanceof Player) {
 					cfg.set(Bukkit.getPlayer(args[0]).getUniqueId() + ".money", Integer.valueOf(args[1]));
 					try {
@@ -807,16 +826,16 @@ public class main extends JavaPlugin implements Listener{
 			}
 			return false;
 		} catch (Exception e) {
-			s.log(e); Methods.print("This error was rent to the developer.",false,ChatColor.RED + "");
+			Methods.log(e);
 		}
 		return false;
-	}	
+	}
 	public static String getVersion() {
 		try {
 			final String svPackageName = Bukkit.getServer().getClass().getPackage().getName();
 			return svPackageName.substring(svPackageName.lastIndexOf('.') + 1);
 		} catch (Exception e) {
-			s.log(e); Methods.print("This error was rent to the developer.",false,ChatColor.RED + "");
+			Methods.log(e);
 		}
 		return null;
 	}

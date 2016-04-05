@@ -1,9 +1,5 @@
-# The save mode can be toggled with /e
-alert: false
-
+# ServerUtils Config
 language: EN
-
-showMobHealth: true
 
 clearLag: true
 clearCooldown: 60
@@ -11,8 +7,15 @@ clearLagBroadcast: true
 
 TeleportToSpawnOnJoin: false
 
+alert: false
+
+# HealthIndicator config
+showMobHealth: true
+
+# RegionConfig
 EnableRegionDisplay: true
 
+# BroadcasterConfig
 broadcasterDelay: 3
 
 broadcastBlockBreak:
@@ -34,6 +37,8 @@ broadcastEntityDamage:
   Bunny: true
   Bat: true
 
+
+# DoubleJumpConfig
 allowFallDamage: true
 
 allowDoubleJump: false

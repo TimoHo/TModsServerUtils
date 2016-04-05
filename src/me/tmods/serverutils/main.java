@@ -5,6 +5,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -221,6 +223,91 @@ public class main extends JavaPlugin implements Listener{
 					}
 				}
 			}
+			Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+				@Override
+				public void run() {
+					Plugin[] plugins = Bukkit.getPluginManager().getPlugins();
+					for (Plugin p:plugins) {
+						if (p.getName().equalsIgnoreCase("TModsServerUtils")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/04ky4v7dk2brjco/ServerUtils.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_Regions")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/vd71tv1ggxxj4x8/SARegions.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_Broadcaster")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/ew6140igf53sa3z/SABroadcaster.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_Warps")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/cxpccc2egqizbgp/SAWarps.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_Customiser")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/tommucix8fu8c0q/SACustom.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_Crates")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/w88j7bmxa1974ef/SACrates.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_HealthIndicator")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/176xybozw0bgzur/SAHealthIndicator.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_DoubleJump")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/26y7khscas8l17o/SADoubleJump.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_Ranks")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/w3uba7zrg9olvkq/SARanks.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_InfiniteFlight")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/i1u93ha8i3dggk3/SAInfiniteFlight.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+						if (p.getName().equalsIgnoreCase("TModsServerAddons_Wands")) {
+							URL url = null; try { url = new URL("https://dl.dropboxusercontent.com/s/vq7le4ch7060dpg/SAWands.jar"); } catch(MalformedURLException e) {e.printStackTrace();}
+							String newversion = Methods.getVersionFromURL(url);
+							if (!newversion.equalsIgnoreCase(p.getDescription().getVersion())) {
+								Methods.print("There's an update aviable for " + p.getName() + " your version: " + p.getDescription().getVersion() + " newest version: " + newversion, false, ChatColor.YELLOW + "");
+							}
+						}
+					}
+				}
+			},20);
 		} catch (Exception e) {
 			Methods.log(e);
 		}

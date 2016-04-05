@@ -2,13 +2,18 @@ package me.tmods.serverutils;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.craftbukkit.libs.jline.internal.InputStreamReader;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -18,6 +23,23 @@ import me.tmods.serverutils.multiversion.v18r3;
 import me.tmods.serverutils.multiversion.v19r1;
 
 public class Methods {
+	public static String getVersionFromURL(URL url) {
+		try {
+			ZipInputStream zin = new ZipInputStream(url.openStream());
+			for (ZipEntry e; (e = zin.getNextEntry()) != null;) {
+				if (e.getName().equalsIgnoreCase("plugin.yml")) {
+					InputStreamReader r = new InputStreamReader(zin);
+					FileConfiguration config = YamlConfiguration.loadConfiguration(r);
+					String version =  config.getString("version");
+					r.close();
+					return version;
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
 	public static void log(Exception e) {
 		if (main.getVersion().equalsIgnoreCase("v1_9_R1") || main.getVersion().equalsIgnoreCase("v1_8_R3")) {
 			main.s.log(e);

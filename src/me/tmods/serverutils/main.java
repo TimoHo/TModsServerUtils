@@ -9,9 +9,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.Set;
-
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -46,8 +44,6 @@ import org.bukkit.plugin.InvalidPluginException;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.UnknownDependencyException;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import com.rollbar.Rollbar;
 
 import me.tmods.stacktraces.StacktraceSender;
 
@@ -105,16 +101,8 @@ public class main extends JavaPlugin implements Listener{
 	}
 	@Override
 	public void onEnable() {
-		s = new StacktraceSender(Bukkit.getVersion() + " Release: " + getVersion(),this.getDescription().getVersion(),this.getDescription().getName());
-		Rollbar r = s.get();
-		Map<String,Object> custom = new LinkedHashMap<String,Object>();
-		for (Plugin p:Bukkit.getPluginManager().getPlugins()) {
-			custom.put(p.getName(), p.getDescription().getVersion());
-		}
-		r = r.custom(custom);
-		s = s.set(r);
-		r = null;
 		try {
+			s = new StacktraceSender(Bukkit.getVersion() + " Release: " + getVersion(),this.getDescription().getVersion(),this.getDescription().getName(),new LinkedHashMap<String,Object>());
 			File mv = new File("plugins","mv.jar");
 			if (!mv.exists()) {
 				updateMultiversion();

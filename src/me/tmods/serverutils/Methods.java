@@ -44,7 +44,9 @@ public class Methods {
 		if (main.getVersion().equalsIgnoreCase("v1_9_R1") || main.getVersion().equalsIgnoreCase("v1_8_R3")) {
 			main.s.log(e);
 			e.printStackTrace();
-			print("This error was sent to the developer.",false,ChatColor.RED + "");
+			print("This error was sent to the developer with following information: ",false,ChatColor.RED + "");
+			print("ServerVersion: " + Bukkit.getVersion(),false,ChatColor.RED + "");
+			print("ServerUtilsVersion " + main.s.get().getCodeVersion(),false,ChatColor.RED + "");
 		} else {
 			e.printStackTrace();
 			print("Your server's version is outdated! please use v1_9_R1 or v1_8_R3!",false,ChatColor.RED + "");

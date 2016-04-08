@@ -41,6 +41,5 @@ broadcastEntityDamage:
 # DoubleJumpConfig
 allowFallDamage: true
 
-allowDoubleJump: false
 doubleJumpUp: 0.5
 doubleJumpForward: 1.5

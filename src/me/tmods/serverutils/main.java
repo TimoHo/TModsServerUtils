@@ -310,6 +310,14 @@ public class main extends JavaPlugin implements Listener{
 	public void onInteract(PlayerInteractEvent event) {
 		if(!event.getPlayer().hasPermission("ServerUtils.build")) {
 			event.setCancelled(true);
+		} else {
+			if (getVersion().equalsIgnoreCase("v1_9_R1")) {
+				if (getConfig().getBoolean("BlockChorusFruit")) {
+					if(Methods.hasChorusFruit(event.getPlayer())) {
+						event.setCancelled(true);
+					}
+				}
+			}
 		}
 	}
 	

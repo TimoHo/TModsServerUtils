@@ -9,6 +9,8 @@ TeleportToSpawnOnJoin: false
 
 alert: false
 
+BlockChorusFruit: false
+
 # HealthIndicator config
 showMobHealth: true
 

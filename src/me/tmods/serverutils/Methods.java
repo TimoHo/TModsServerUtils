@@ -23,6 +23,9 @@ import me.tmods.serverutils.multiversion.v18r3;
 import me.tmods.serverutils.multiversion.v19r1;
 
 public class Methods {
+	public static boolean hasChorusFruit(Player p) {
+		return v19r1.hasChorusFruit(p);
+	}
 	public static String getVersionFromURL(URL url) {
 		try {
 			ZipInputStream zin = new ZipInputStream(url.openStream());

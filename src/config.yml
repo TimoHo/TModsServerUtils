@@ -6,6 +6,7 @@ clearCooldown: 60
 clearLagBroadcast: true
 
 TeleportToSpawnOnJoin: false
+SpawnTeleportDelay: 0
 
 alert: false
 

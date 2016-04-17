@@ -8,6 +8,7 @@ import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
@@ -34,6 +35,7 @@ import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.server.ServerListPingEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -56,6 +58,7 @@ public class main extends JavaPlugin implements Listener{
 	public static File language = new File("plugins/TModsServerUtils","lang.yml");
 	public static FileConfiguration lang = YamlConfiguration.loadConfiguration(language);
 	public static StacktraceSender s;
+	public static HashMap<Player,Integer> spawnTeleport = new HashMap<Player,Integer>();
 	public void updateMultiversion() {
 		InputStream newMv = null;
 		if (getVersion().equalsIgnoreCase("v1_8_R3")) {
@@ -428,6 +431,18 @@ public class main extends JavaPlugin implements Listener{
 	}
 
 	@EventHandler
+	public void onMove(PlayerMoveEvent e) {
+		try {
+		if (spawnTeleport.containsKey(e.getPlayer()) && e.getFrom().getX() != e.getTo().getX() && e.getFrom().getZ() != e.getTo().getZ()) {
+			e.getPlayer().sendMessage("teleportation aborted.");
+			Bukkit.getScheduler().cancelTask(spawnTeleport.get(e.getPlayer()));
+			spawnTeleport.remove(e.getPlayer());
+		}
+		} catch (Exception e1) {
+			Methods.log(e1);
+		}
+	}
+	@EventHandler
 	public void onPlayerJoin(PlayerJoinEvent event) {
 		try {
 			if (cfg.getConfigurationSection("Bans.players") != null) {
@@ -482,7 +497,26 @@ public class main extends JavaPlugin implements Listener{
 						}
 						loc.setYaw((float) cfg.getDouble("SpawnLoc.yaw"));
 						if (loc.getX() != 0 && loc.getY() != 0 && loc.getZ() != 0) {
-							p.teleport(loc);
+							Integer spawnDelay = getConfig().getInt("SpawnTeleportDelay");
+							if (spawnDelay != 0) {
+								if (spawnTeleport.containsKey(p)) {
+									sender.sendMessage("already teleporting!");
+									return true;
+								} else {
+									final Location spawnLoc = loc;
+									sender.sendMessage("teleporting in " + spawnDelay + " seconds.");
+									sender.sendMessage("move to abort teleportation.");
+									spawnTeleport.put(p, Bukkit.getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
+										@Override
+										public void run() {
+											spawnTeleport.remove(p);
+											p.teleport(spawnLoc);
+										}
+									},spawnDelay * 20));
+								}
+							} else {
+								p.teleport(loc);
+							}
 						} else {
 							sender.sendMessage(Methods.getLang("nospawn"));
 						}

@@ -10,6 +10,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Set;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
@@ -47,6 +48,8 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.UnknownDependencyException;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import me.tmods.api.MailBox;
+import me.tmods.api.PlayerMail;
 import me.tmods.stacktraces.StacktraceSender;
 
 public class main extends JavaPlugin implements Listener{
@@ -64,7 +67,9 @@ public class main extends JavaPlugin implements Listener{
 		if (getVersion().equalsIgnoreCase("v1_8_R3")) {
 			newMv = getResource("mv18.jar");
 		} else if (getVersion().equalsIgnoreCase("v1_9_R1")){
-			newMv = getResource("mv19.jar");
+			newMv = getResource("mv19-1.jar");
+		} else if (getVersion().equalsIgnoreCase("v1_9_R2")){
+			newMv = getResource("mv19-2.jar");
 		}
 		if (new File("plugins","mv.jar").exists()) {
 			new File("plugins","mv.jar").delete();
@@ -111,9 +116,12 @@ public class main extends JavaPlugin implements Listener{
 				updateMultiversion();
 			} else {
 				Plugin pl = Bukkit.getPluginManager().getPlugin("TMods_Multiversion");
-				if (!pl.getDescription().getVersion().equalsIgnoreCase(this.getDescription().getVersion())) {
+				if (pl == null) {
+					updateMultiversion();
+				} else if (!pl.getDescription().getVersion().equalsIgnoreCase(this.getDescription().getVersion())) {
 					updateMultiversion();
 				}
+				
 			}
 			InputStream source = getResource("lang.yml");
 			Reader read = new InputStreamReader(source);
@@ -175,12 +183,10 @@ public class main extends JavaPlugin implements Listener{
 			} else {
 				Methods.print(Methods.getLang("sminactive"),true,"" + ChatColor.DARK_GREEN);
 			}
-			if (getVersion().equalsIgnoreCase("v1_9_R1")) {
-				Methods.print("Detected version: " + getVersion() + " no multiversion support needed.", false, ChatColor.GREEN + "");
-			} else if (getVersion().equalsIgnoreCase("v1_8_R3")) {
-				Methods.print("Multiversion support enabled for " + getVersion() + ". there may be some things, that don't work correctly! If you want them to work, the please upgrade to v1_9_R1", false, ChatColor.YELLOW + "");
+			if (getVersion().equalsIgnoreCase("v1_9_R2") || getVersion().equalsIgnoreCase("v1_9_R1") || getVersion().equalsIgnoreCase("v1_8_R3")) {
+				Methods.print("Multiversion Support enabled for " + getVersion(), false, ChatColor.GREEN + "");
 			} else {
-				Methods.print("Your version is: " + getVersion() + ". This is not compatible with this plugin! please upgrade to v1_8_R3 or v1_9_R1", false, ChatColor.RED + "");
+				Methods.print("Detected Version " + getVersion() + ". This is not Compatible with this plugin!", false, ChatColor.RED + "");
 			}
 			if (getConfig().getBoolean("clearLag")) {
 				Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
@@ -482,9 +488,73 @@ public class main extends JavaPlugin implements Listener{
 		}
 	}
 	
+	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender,Command cmd,String label,String[] args){
 		try {
+			if (cmd.getName().equalsIgnoreCase("mail")) {
+				if (!(sender instanceof Player)) {
+					return true;
+				}
+				if (!sender.hasPermission("ServerUtils.mail")) {
+					sender.sendMessage(Methods.getLang("permdeny"));
+					return true;
+				}
+				if (args.length != 2) {
+					return false;
+				}
+				if (Bukkit.getOfflinePlayer(args[0]) == null) {
+					sender.sendMessage("this player was never on this server!");
+					return true;
+				}
+				MailBox mb = MailBox.getMailbox(Bukkit.getOfflinePlayer(args[0]).getUniqueId().toString());
+				mb.add(new PlayerMail((Player) sender, args[1], Methods.getItemInHand((Player) sender),mb));
+				mb.save(new File("plugins/TModsServerUtils/mail",Bukkit.getOfflinePlayer(args[0]).getUniqueId().toString() + ".pln"));
+				Methods.setItemInHand((Player) sender, null);
+				if (Bukkit.getPlayer(args[0]) != null) {
+					Bukkit.getPlayer(args[0]).sendMessage("You've got a new mail from " + sender.getName());
+				}
+				return true;
+			}
+			if (cmd.getName().equalsIgnoreCase("openmail")) {
+				if (!(sender instanceof Player)) {
+					return true;
+				}
+				if (!sender.hasPermission("ServerUtils.mail")) {
+					sender.sendMessage(Methods.getLang("permdeny"));
+					return true;
+				}
+				if (args.length != 1) {
+					return false;
+				}
+				MailBox mb = MailBox.getMailbox((Player) sender);
+				if (mb.inbox.size() < Integer.valueOf(args[0]) || mb.inbox.get(Integer.valueOf(args[0])) == null) {
+					sender.sendMessage("this message doesn't exist");
+					return true;
+				}
+				mb.inbox.get(Integer.valueOf(args[0])).open((Player) sender);
+				return true;
+			}
+			if (cmd.getName().equalsIgnoreCase("listmail")) {
+				if (!(sender instanceof Player)) {
+					return true;
+				}
+				if (!sender.hasPermission("ServerUtils.mail")) {
+					sender.sendMessage(Methods.getLang("permdeny"));
+					return true;
+				}
+				MailBox mb = MailBox.getMailbox((Player) sender);
+				if (mb.inbox.size() == 0) {
+					sender.sendMessage("There's no new mail.");
+					return true;
+				}
+				List<PlayerMail> inbox = mb.inbox;
+				sender.sendMessage("You have " + inbox.size() + " new mails");
+				for (PlayerMail m:inbox){
+					sender.sendMessage(MailBox.getMailbox((Player) sender).getID(m) + ": " + m.getSender().getName());
+				}
+				return true;
+			}
 			if (cmd.getName().equalsIgnoreCase("spawn")) {
 				if (sender.hasPermission("ServerUtils.warpSpawn")) {
 					if (sender instanceof Player) {
@@ -812,6 +882,10 @@ public class main extends JavaPlugin implements Listener{
 				return true;
 			}
 			if (cmd.getName().equalsIgnoreCase("enderinv") && sender.hasPermission("ServerUtils.enderinv") && args.length == 1 && Bukkit.getPlayer(sender.getName()) != null) {
+				if (Bukkit.getPlayer(args[0]).getEnderChest() == null) {
+					sender.sendMessage("This player has never touched an Enderchest!");
+					return true;
+				}
 				Bukkit.getPlayer(sender.getName()).openInventory(Bukkit.getPlayer(args[0]).getEnderChest());
 				return true;
 			}

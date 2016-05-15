@@ -1,6 +1,6 @@
 name: TModsServerUtils
 main: me.tmods.serverutils.main
-version: 2.91
+version: 3.0
 author: Timo Hocker
 website: http://timosmods.weebly.com
 
@@ -69,26 +69,12 @@ commands:
      spawn:
           description: warp to the server spawn
           usage: /spawn
-          
-          
-Permissions:
-     ServerUtils.joinOnSecure
-     ServerUtils.inv
-     ServerUtils.enderinv
-     ServerUtils.trash
-     ServerUtils.home
-     ServerUtils.multihome
-     ServerUtils.setAlert
-     ServerUtils.backpack
-     ServerUtils.Permissions.get
-     ServerUtils.Permissions.manage
-     ServerUtils.economy.bal
-     ServerUtils.economy.pay
-     Serverutils.economy.set
-     ServerUtils.economy.manageShop
-     ServerUtils.economy.buyShop
-     ServerUtils.recipe
-     ServerUtils.build
-     ServerUtils.suban
-     ServerUtils.warpSpawn
-     ServerUtils.setSpawn
+     mail:
+          description: send a mail with the current item in your hand attached
+          usage: /mail [player] [message]
+     listmail:
+          description: list your inbox
+          usage: /listmail
+     openmail:
+          description: open a mail
+          usage: /openmail [id]

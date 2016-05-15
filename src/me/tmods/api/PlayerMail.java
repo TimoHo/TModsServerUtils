@@ -1,11 +1,6 @@
 package me.tmods.api;
 
-import java.beans.XMLDecoder;
-import java.beans.XMLEncoder;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -84,27 +79,16 @@ public class PlayerMail {
 		if (this.content == null) {
 			serializedMap = "noContent";
 		} else {
-			Map<String,Object> map = this.content.serialize();
-			ByteArrayOutputStream bos = new ByteArrayOutputStream();
-			XMLEncoder xmlEncoder = new XMLEncoder(bos);
-			xmlEncoder.writeObject(map);
-			xmlEncoder.flush();
-			serializedMap = bos.toString();
-			xmlEncoder.close();
+			serializedMap = Serializer.serializeItemStack(this.content);
 		}
 		s = this.senderName + "-:-" + this.senderUUID.toString() + "-:-" + this.text + "-:-" + serializedMap;
 		return s;
 	}
-	@SuppressWarnings("unchecked")
 	public static PlayerMail valueOf(String s) {
 		String[] data = s.split("-:-");
 		ItemStack content = null;
 		if (!data[3].equalsIgnoreCase("noContent")) {
-			String serializedMap = data[3];
-			XMLDecoder xmlDecoder = new XMLDecoder(new ByteArrayInputStream(serializedMap.getBytes()));
-			Map<String, Object> parsedMap = (Map<String, Object>) xmlDecoder.readObject();
-			content = ItemStack.deserialize(parsedMap);
-			xmlDecoder.close();
+			content = Serializer.deserializeItemStack(data[3]);
 		}
 		String senderName = data[0];
 		UUID senderUUID = UUID.fromString(data[1]);
@@ -116,5 +100,21 @@ public class PlayerMail {
 	}
 	public void setMailBox(MailBox mb) {
 		this.mb = mb;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof PlayerMail) {
+			PlayerMail pm = (PlayerMail) obj;
+			if (pm.content.isSimilar(this.content)) {
+				if (pm.text.equals(this.text)) {
+					if (pm.senderName.equals(this.senderName)) {
+						if (pm.senderUUID.equals(this.senderUUID)) {
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
 	}
 }

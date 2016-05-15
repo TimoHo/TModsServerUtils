@@ -500,16 +500,20 @@ public class main extends JavaPlugin implements Listener{
 					sender.sendMessage(Methods.getLang("permdeny"));
 					return true;
 				}
-				if (args.length != 2) {
+				if (args.length < 2) {
 					return false;
 				}
 				if (Bukkit.getOfflinePlayer(args[0]) == null) {
 					sender.sendMessage("this player was never on this server!");
 					return true;
 				}
+				String msg = "";
+				for (int i = 1;i < args.length;i++) {
+					msg = msg + args[i];
+				}
 				MailBox mb = MailBox.getMailbox(Bukkit.getOfflinePlayer(args[0]).getUniqueId().toString());
-				mb.add(new PlayerMail((Player) sender, args[1], Methods.getItemInHand((Player) sender),mb));
-				mb.save(new File("plugins/TModsServerUtils/mail",Bukkit.getOfflinePlayer(args[0]).getUniqueId().toString() + ".pln"));
+				mb.add(new PlayerMail((Player) sender, msg, Methods.getItemInHand((Player) sender),mb));
+				mb.save(new File("plugins/TModsServerUtils/mail",Bukkit.getOfflinePlayer(args[0]).getUniqueId().toString() + ".plm"));
 				Methods.setItemInHand((Player) sender, null);
 				if (Bukkit.getPlayer(args[0]) != null) {
 					Bukkit.getPlayer(args[0]).sendMessage("You've got a new mail from " + sender.getName());

@@ -19,6 +19,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 
+import me.tmods.api.Particle;
+import me.tmods.api.Sound;
 import me.tmods.serverutils.multiversion.v18r3;
 import me.tmods.serverutils.multiversion.v19r1;
 import me.tmods.serverutils.multiversion.v19r2;
@@ -27,9 +29,10 @@ public class Methods {
 	public static boolean hasChorusFruit(Player p) {
 		if (main.getVersion() == "v1_9_R1") {
 			return v19r1.hasChorusFruit(p);
-		} else {
+		} else if (main.getVersion() == "v1_9_R2") {
 			return v19r2.hasChorusFruit(p);
 		}
+		return false;
 	}
 	public static String getVersionFromURL(URL url) {
 		try {
@@ -126,19 +129,19 @@ public class Methods {
 		}
 		return null;
 	}
-	public static void playSound(String type,Location loc,Player p) {
+	public static void playSound(Sound s,Location loc,Player p) {
 		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			v18r3.playSound(type,loc,p);
+			v18r3.playSound(s,loc,p);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
-			v19r1.playSound(type,loc,p);
+			v19r1.playSound(s,loc,p);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
-			v19r2.playSound(type,loc,p);
+			v19r2.playSound(s,loc,p);
 		} else {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
 		}
 	}
-	public static void playEffect(Location loc,String p,float f,int amount,boolean showDistance) {
+	public static void playEffect(Location loc,Particle p,float f,int amount,boolean showDistance) {
 		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
 			v18r3.playEffect(loc, p, f, amount, showDistance);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
@@ -206,7 +209,9 @@ public class Methods {
 	
 	public static void banPlayer(Player p) {
 		List<String> players = new ArrayList<String>();
-		players.addAll(main.cfg.getConfigurationSection("Bans.players").getKeys(false));
+		if (main.cfg.getConfigurationSection("Bans.players") != null) {
+			players.addAll(main.cfg.getConfigurationSection("Bans.players").getKeys(false));
+		}
 		if (!players.contains(p.getName())) {
 			main.cfg.set("Bans.players." + p.getName(), p.getUniqueId() + "");
 		}
@@ -218,7 +223,9 @@ public class Methods {
 	}
 	public static void unbanPlayer(String name) {
 		List<String> players = new ArrayList<String>();
-		players.addAll(main.cfg.getConfigurationSection("Bans.players").getKeys(false));
+		if (main.cfg.getConfigurationSection("Bans.players") != null) {
+			players.addAll(main.cfg.getConfigurationSection("Bans.players").getKeys(false));
+		}
 		if (players.contains(name)) {
 			main.cfg.set("Bans.players." + name, null);
 		}

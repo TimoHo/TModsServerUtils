@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -309,7 +310,7 @@ public class main extends JavaPlugin implements Listener{
 			Methods.log(e);
 		}
 	}
-
+	
 	@Override
 	public void onDisable() {
 		Bukkit.getScheduler().cancelTasks(this);
@@ -509,7 +510,11 @@ public class main extends JavaPlugin implements Listener{
 				}
 				String msg = "";
 				for (int i = 1;i < args.length;i++) {
-					msg = msg + args[i];
+					String msgPart = args[i];
+					msgPart = msgPart.replaceAll("ä", "ae");
+					msgPart = msgPart.replaceAll("ö", "oe");
+					msgPart = msgPart.replaceAll("ü", "ue");
+					msg = msg + " " +  msgPart;
 				}
 				MailBox mb = MailBox.getMailbox(Bukkit.getOfflinePlayer(args[0]).getUniqueId().toString());
 				mb.add(new PlayerMail((Player) sender, msg, Methods.getItemInHand((Player) sender),mb));
@@ -532,11 +537,11 @@ public class main extends JavaPlugin implements Listener{
 					return false;
 				}
 				MailBox mb = MailBox.getMailbox((Player) sender);
-				if (mb.inbox.size() < Integer.valueOf(args[0]) || mb.inbox.get(Integer.valueOf(args[0])) == null) {
+				if (mb.inbox.size() < (Integer.valueOf(args[0])-1) || mb.inbox.get(Integer.valueOf(args[0])-1) == null) {
 					sender.sendMessage("this message doesn't exist");
 					return true;
 				}
-				mb.inbox.get(Integer.valueOf(args[0])).open((Player) sender);
+				mb.inbox.get(Integer.valueOf(args[0])-1).open((Player) sender);
 				return true;
 			}
 			if (cmd.getName().equalsIgnoreCase("listmail")) {
@@ -864,9 +869,14 @@ public class main extends JavaPlugin implements Listener{
 					sender.sendMessage(Methods.getLang("permdeny"));
 					return true;
 				}
-				if (args[1].length() > 13) {
-					sender.sendMessage("The given number must be betweed 0 and 1000000000000");
+				if (args[1].length() > 9) {
+					sender.sendMessage("The given number must be betweed 0 and 999,999,999");
 					return true;
+				} else {
+					if (Integer.valueOf(args[1]) < 0) {
+						sender.sendMessage("The given number must be betweed 0 and 999,999,999");
+						return true;
+					}
 				}
 				if (Bukkit.getPlayer(args[0]) instanceof Player) {
 					cfg.set(Bukkit.getPlayer(args[0]).getUniqueId() + ".money", Integer.valueOf(args[1]));

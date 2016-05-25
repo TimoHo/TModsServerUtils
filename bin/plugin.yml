@@ -1,8 +1,7 @@
 name: TModsServerUtils
 main: me.tmods.serverutils.main
-version: 3.0
+version: 3.1
 author: Timo Hocker
-website: http://timosmods.weebly.com
 
 loadbefore:
   - TmodsServerAddons_Wands
@@ -15,6 +14,7 @@ loadbefore:
   - TModsServerAddons_Regions
   - TModsServerAddons_Ranks
   - TModsServerAddons_InfiniteFlight
+  - TModsServerAddons_Kits
 
 commands:
      e:

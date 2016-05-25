@@ -2,22 +2,17 @@ package me.tmods.api;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.xml.bind.DatatypeConverter;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-
-import me.tmods.serverutils.Methods;
+import org.bukkit.util.Vector;
+import org.bukkit.util.io.BukkitObjectInputStream;
+import org.bukkit.util.io.BukkitObjectOutputStream;
+import org.yaml.snakeyaml.external.biz.base64Coder.Base64Coder;
 
 public class Serializer {
 	public static String serializeLocation(Location loc) {
@@ -44,43 +39,68 @@ public class Serializer {
 		return null;
 	}
 	
-    public static String serializeItemStack(ItemStack i) {
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(i.serialize());
-            oos.flush();
-            return DatatypeConverter.printBase64Binary(bos.toByteArray());
-        }
-        catch (Exception e) {
-        	Methods.log(e);
-        }
-        return "";
-    }
-    @SuppressWarnings("unchecked")
-	public static ItemStack deserializeItemStack(String s) {
-        try {
-            ItemStack istack;
-        	ByteArrayInputStream bis = new ByteArrayInputStream(
-            DatatypeConverter.parseBase64Binary(s));
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            Map<String,Object> s1 = (Map<String, Object>) ois.readObject();
-            if (s1.containsKey("meta")) {
-                Map<String, Object> im = new HashMap<>((Map<String, Object>) s1.remove("meta"));
-                im.put("==", "ItemMeta");
-                ItemStack is = ItemStack.deserialize(s1);
-                is.setItemMeta((ItemMeta) ConfigurationSerialization.deserializeObject(im));
-                istack = is;
-            }
-            else {
-                istack = ItemStack.deserialize(s1);
-            }
-            
-            return istack;
-        }
-        catch (Exception e) {
-            Methods.log(e);
-        }
-        return null;
-    }
+	public static String serializeItemStack(ItemStack stack){
+	     try {
+	         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+	         BukkitObjectOutputStream dataOutput = new BukkitObjectOutputStream(outputStream);
+	         dataOutput.writeObject(stack);
+	         dataOutput.close();
+	         return Base64Coder.encodeLines(outputStream.toByteArray());
+	     }
+	     catch (Exception e) {
+	         throw new IllegalStateException("Unable to save item stack.", e);
+	     }
+	 }
+
+	 public static ItemStack deserializeItemStack(String data){
+	     try {
+	         ByteArrayInputStream inputStream = new ByteArrayInputStream(Base64Coder.decodeLines(data));
+	         BukkitObjectInputStream dataInput = new BukkitObjectInputStream(inputStream);
+	         try {
+	             return (ItemStack) dataInput.readObject();
+	         } finally {
+	             dataInput.close();
+	         }
+	     }
+	     catch (Exception e) {
+	         throw new IllegalStateException("Unable to decode class type.", e);
+	     }
+	 }
+	 public static String serializeVector(Vector v) {
+		 String s = v.getX() + "/:/" + v.getY() + "/:/" + v.getZ();
+		 return s;
+	 }
+	 public static Vector deserializeVector(String s) {
+		 Double x = Double.valueOf(s.split("/:/")[0]);
+		 Double y = Double.valueOf(s.split("/:/")[1]);
+		 Double z = Double.valueOf(s.split("/:/")[2]);
+		 return new Vector(x,y,z);
+	 }
+	 public static String serializeInventory(Inventory inv) {
+		 String s = "";
+		 if (inv.getContents().length > 0) {
+			 for (int i = 0;i<inv.getSize();i++) {
+				 ItemStack is = inv.getItem(i);
+				 String stack;
+				 if (is == null) {
+					 stack = "nullSlot";
+				 } else {
+					 stack = serializeItemStack(is) + "::" + i;
+				 }
+				 s = s + stack + "ispace";
+			 }
+		 }
+		 return s;
+	 }
+	 public static Inventory deserializeInventory(String s) {
+		 Inventory inv = Bukkit.createInventory(null, s.split("ispace").length);
+		 for (int i = 0;i<s.split("ispace").length;i++) {
+			 if (s.split("ispace")[i] == "nullSlot") {
+				 inv.setItem(i, null);
+			 } else {
+				 inv.setItem(i, deserializeItemStack(s.split("ispace")[i]));
+			 }
+		 }
+		 return inv;
+	 }	 
 }

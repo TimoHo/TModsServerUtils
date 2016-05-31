@@ -7,6 +7,8 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -26,6 +28,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.libs.jline.internal.InputStreamReader;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
@@ -34,6 +37,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -57,10 +61,10 @@ public class main extends JavaPlugin implements Listener{
 	public boolean alert = true;
 	public String home = "";
 	public int clearLag = 0;
-	public static File file = new File("plugins/TModsServerUtils", "data.yml");
-	public static FileConfiguration cfg = YamlConfiguration.loadConfiguration(file);
-	public static File language = new File("plugins/TModsServerUtils","lang.yml");
-	public static FileConfiguration lang = YamlConfiguration.loadConfiguration(language);
+	public static File file;
+	public static FileConfiguration cfg;
+	public static File language;
+	public static FileConfiguration lang;
 	public static StacktraceSender s;
 	public static HashMap<Player,Integer> spawnTeleport = new HashMap<Player,Integer>();
 	public void updateMultiversion() {
@@ -111,6 +115,10 @@ public class main extends JavaPlugin implements Listener{
 	@Override
 	public void onEnable() {
 		try {
+			file = new File("plugins/TModsServerUtils", "data.yml");
+			cfg = YamlConfiguration.loadConfiguration(file);
+			language = new File("plugins/TModsServerUtils","lang.yml");
+			lang = YamlConfiguration.loadConfiguration(language);
 			s = new StacktraceSender(Bukkit.getVersion() + " Release: " + getVersion(),this.getDescription().getVersion(),this.getDescription().getName(),new LinkedHashMap<String,Object>());
 			File mv = new File("plugins","mv.jar");
 			if (!mv.exists()) {
@@ -313,6 +321,11 @@ public class main extends JavaPlugin implements Listener{
 	
 	@Override
 	public void onDisable() {
+		try {
+			cfg.save(file);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 		Bukkit.getScheduler().cancelTasks(this);
 	}
 	
@@ -325,6 +338,28 @@ public class main extends JavaPlugin implements Listener{
 				if (getConfig().getBoolean("BlockChorusFruit")) {
 					if(Methods.hasChorusFruit(event.getPlayer())) {
 						event.setCancelled(true);
+					}
+				}
+			}
+		}
+		if (Methods.getItemInHand(event.getPlayer()) != null) {
+			ItemStack is = Methods.getItemInHand(event.getPlayer());
+			if (is.hasItemMeta() && is.getType() == Material.PAPER) {
+				ItemMeta m = is.getItemMeta();
+				if (m.getLore().size() == 3) {
+					if (new String(Base64.getDecoder().decode(m.getLore().get(1))).equalsIgnoreCase(event.getPlayer().getUniqueId().toString())) {
+						cfg.set(event.getPlayer().getUniqueId().toString() + ".money", (cfg.getInt(event.getPlayer().getUniqueId().toString() + ".money") + Integer.valueOf(m.getLore().get(2))));
+						if (is.getAmount() < 2) {
+							is = null;
+						} else {
+							is.setAmount(is.getAmount()-1);
+						}
+						Methods.setItemInHand(event.getPlayer(), is);
+						try {
+							cfg.save(file);
+						} catch (IOException e) {
+							e.printStackTrace();
+						}
 					}
 				}
 			}
@@ -484,15 +519,64 @@ public class main extends JavaPlugin implements Listener{
 					event.getPlayer().teleport(loc);
 				}
 			}
+			if (cfg.getConfigurationSection(event.getPlayer().getUniqueId().toString()) == null) {
+				cfg.set(event.getPlayer().getUniqueId().toString() + ".Name", event.getPlayer().getName());
+				cfg.set(event.getPlayer().getUniqueId().toString() + ".money", 0);
+				cfg.set(event.getPlayer().getUniqueId().toString() + ".Permissions.List", new ArrayList<String>());
+				cfg.save(file);
+			}
 		} catch (Exception e) {
 			Methods.log(e);
 		}
 	}
-	
+	@EventHandler 
+	public void onDrop(PlayerDropItemEvent e) {
+		if (e.getItemDrop().getItemStack().hasItemMeta() && e.getItemDrop().getItemStack().getType() == Material.PAPER) {
+			ItemMeta m = e.getItemDrop().getItemStack().getItemMeta();
+			if (m.getLore().size() == 3) {
+				if (m.getDisplayName().equalsIgnoreCase("Money")) {
+					e.setCancelled(true);
+					e.getItemDrop().remove();
+				}
+			}
+		}
+	}
 	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender sender,Command cmd,String label,String[] args){
 		try {
+			if (cmd.getName().equalsIgnoreCase("money")) {
+				if (!sender.hasPermission("ServerUtils.economy.money")) {
+					sender.sendMessage(Methods.getLang("permdeny"));
+					return true;
+				}
+				if (args.length != 1) {
+					return false;
+				}
+				Integer amount = 0;
+				try{
+					amount = Integer.valueOf(args[0]);
+				} catch(Exception e) {
+					sender.sendMessage(args[0] + " is not a valid number!");
+					return true;
+				}
+				if (sender instanceof Player) {
+					cfg.set(((Player) sender).getUniqueId().toString() + ".money", (cfg.getInt(((Player) sender).getUniqueId().toString() + ".money")-amount));
+					ItemStack is = new ItemStack(Material.PAPER);
+					ItemMeta m = is.getItemMeta();
+					m.setDisplayName("Money");
+					List<String> lore = new ArrayList<String>();
+					lore.add(ChatColor.BLACK + amount.toString());
+					m.setLore(lore);
+					m.addEnchant(Enchantment.LURE, 1,true);
+					is.setItemMeta(m);
+					((Player) sender).getInventory().addItem(is);
+				} else {
+					sender.sendMessage("You're not a player!");
+				}
+				cfg.save(file);
+				return true;
+			}
 			if (cmd.getName().equalsIgnoreCase("mail")) {
 				if (!(sender instanceof Player)) {
 					return true;
@@ -870,11 +954,11 @@ public class main extends JavaPlugin implements Listener{
 					return true;
 				}
 				if (args[1].length() > 9) {
-					sender.sendMessage("The given number must be betweed 0 and 999,999,999");
+					sender.sendMessage("The given number must be between 0 and 999,999,999");
 					return true;
 				} else {
 					if (Integer.valueOf(args[1]) < 0) {
-						sender.sendMessage("The given number must be betweed 0 and 999,999,999");
+						sender.sendMessage("The given number must be between 0 and 999,999,999");
 						return true;
 					}
 				}

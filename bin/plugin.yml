@@ -54,6 +54,9 @@ commands:
      setMoney:
           description: set someones money
           usage: /setMoney <player> <amount>
+     money:
+          description: get a paper worth of money
+          usage: /money [amount]
      shop:
           description: all economy shop commands
           usage: /shop <list/open/create/cost> [shop] [itemSlot] [cost]

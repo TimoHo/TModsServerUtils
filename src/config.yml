@@ -1,6 +1,3 @@
-# ServerUtils Config
-language: EN
-
 clearLag: true
 clearCooldown: 60
 clearLagBroadcast: true
@@ -11,6 +8,16 @@ SpawnTeleportDelay: 0
 alert: false
 
 BlockChorusFruit: false
+
+syncFiles: false
+sync:
+  - TModsData;plugins/TModsServerUtils/data.yml
+MySQL:
+  host: localhost
+  port: 3306
+  datb: database
+  user: root
+  pass: password
 
 # HealthIndicator config
 showMobHealth: true

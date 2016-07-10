@@ -2,12 +2,16 @@ package me.tmods.api;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.Vector;
 import org.bukkit.util.io.BukkitObjectInputStream;
@@ -76,31 +80,53 @@ public class Serializer {
 		 Double z = Double.valueOf(s.split("/:/")[2]);
 		 return new Vector(x,y,z);
 	 }
-	 public static String serializeInventory(Inventory inv) {
-		 String s = "";
-		 if (inv.getContents().length > 0) {
-			 for (int i = 0;i<inv.getSize();i++) {
-				 ItemStack is = inv.getItem(i);
-				 String stack;
-				 if (is == null) {
-					 stack = "nullSlot";
-				 } else {
-					 stack = serializeItemStack(is) + "::" + i;
-				 }
-				 s = s + stack + "ispace";
+	 public static List<String> serializeItems(ItemStack[] items) {
+		 List<String> list = new ArrayList<String>();
+		 for (ItemStack is:items) {
+			 if (is != null) {
+				 list.add(serializeItemStack(is));
 			 }
 		 }
-		 return s;
+		 return list;
 	 }
-	 public static Inventory deserializeInventory(String s) {
-		 Inventory inv = Bukkit.createInventory(null, s.split("ispace").length);
-		 for (int i = 0;i<s.split("ispace").length;i++) {
-			 if (s.split("ispace")[i] == "nullSlot") {
-				 inv.setItem(i, null);
-			 } else {
-				 inv.setItem(i, deserializeItemStack(s.split("ispace")[i]));
+	 public static ItemStack[] deserializeItems(List<String> items) {
+		 ItemStack[] list = new ItemStack[items.size()];
+		 if (!items.isEmpty()) {
+			 for (int i = 0;i<items.size();i++) {
+				 list[i] = deserializeItemStack(items.get(i));
 			 }
 		 }
-		 return inv;
-	 }	 
+		 return list;
+	 }
+	 public static List<String> encrypt(List<String> s) {
+		 List<String> e = new ArrayList<String>();
+		 if (!s.isEmpty()) {
+			 for (String str:s) {
+				 e.add(encrypt(str));
+			 }
+		 }
+		 return e;
+	 }
+	 public static List<String> decrypt(List<String> s) {
+		 List<String> d = new ArrayList<String>();
+		 if (!s.isEmpty()) {
+			 for (String str:s) {
+				 d.add(decrypt(str));
+			 }
+		 }
+		 return d;
+	 }
+	 public static String serializeFile(InputStream is) {
+		 if (is != null) {
+			 try {
+				return IOUtils.toString(is);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		 }
+		return null;
+	 }
+	 public static InputStream deserializeFile(String s) {
+		 return IOUtils.toInputStream(s);
+	 }
 }

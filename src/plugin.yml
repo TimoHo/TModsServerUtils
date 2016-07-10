@@ -1,6 +1,6 @@
 name: TModsServerUtils
 main: me.tmods.serverutils.main
-version: 3.1
+version: 3.22
 author: Timo Hocker
 
 loadbefore:

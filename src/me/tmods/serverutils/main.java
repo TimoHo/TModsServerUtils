@@ -4,11 +4,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -27,7 +25,6 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.craftbukkit.libs.jline.internal.InputStreamReader;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Item;
@@ -53,7 +50,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.UnknownDependencyException;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import me.tmods.api.FileSyncronizer;
 import me.tmods.api.MailBox;
+import me.tmods.api.MySQL;
 import me.tmods.api.PlayerMail;
 import me.tmods.stacktraces.StacktraceSender;
 
@@ -63,14 +62,26 @@ public class main extends JavaPlugin implements Listener{
 	public int clearLag = 0;
 	public static File file;
 	public static FileConfiguration cfg;
-	public static File language;
-	public static FileConfiguration lang;
 	public static StacktraceSender s;
 	public static HashMap<Player,Integer> spawnTeleport = new HashMap<Player,Integer>();
+	private static MySQL sql;
+	public static Runnable sync = new Runnable() {
+		@Override
+		public void run() {
+			List<String> files = main.getPlugin(main.class).getConfig().getStringList("sync");
+			if (files.size() > 0) {
+				for (String str:files) {
+					File f = new File(str.split(";")[1]);
+					FileSyncronizer.sync(f, sql,str.split(";")[0]);
+				}
+			}
+		}
+	};
+	public static int synctask;
 	public void updateMultiversion() {
 		InputStream newMv = null;
-		if (getVersion().equalsIgnoreCase("v1_8_R3")) {
-			newMv = getResource("mv18.jar");
+		if (getVersion().equalsIgnoreCase("v1_10_R1")) {
+			newMv = getResource("mv110.jar");
 		} else if (getVersion().equalsIgnoreCase("v1_9_R1")){
 			newMv = getResource("mv19-1.jar");
 		} else if (getVersion().equalsIgnoreCase("v1_9_R2")){
@@ -112,13 +123,25 @@ public class main extends JavaPlugin implements Listener{
 		Bukkit.getPluginManager().enablePlugin(Bukkit.getPluginManager().getPlugin("TMods_Multiversion"));
 		Methods.print("If you see any errors, an update of the multiversion api could have caused it. please restart your server if you get any errors.", false, ChatColor.RED + "");
 	}
+	@SuppressWarnings("deprecation")
 	@Override
 	public void onEnable() {
 		try {
+			if (getConfig().getBoolean("syncFiles")) {
+				String host = getConfig().getString("MySQL.host");
+				String port = getConfig().getString("MySQL.port");
+				String datb = getConfig().getString("MySQL.datb");
+				String user = getConfig().getString("MySQL.user");
+				String pass = getConfig().getString("MySQL.pass");
+				sql = new MySQL(host, port, datb, user, pass);
+				if (sql.isConnected()) {
+					synctask = Bukkit.getScheduler().scheduleAsyncRepeatingTask(this, sync, 1,1);
+				} else {
+					Methods.print("SQL connection falied!",false,ChatColor.RED + "");
+				}
+			}
 			file = new File("plugins/TModsServerUtils", "data.yml");
 			cfg = YamlConfiguration.loadConfiguration(file);
-			language = new File("plugins/TModsServerUtils","lang.yml");
-			lang = YamlConfiguration.loadConfiguration(language);
 			s = new StacktraceSender(Bukkit.getVersion() + " Release: " + getVersion(),this.getDescription().getVersion(),this.getDescription().getName(),new LinkedHashMap<String,Object>());
 			File mv = new File("plugins","mv.jar");
 			if (!mv.exists()) {
@@ -131,27 +154,6 @@ public class main extends JavaPlugin implements Listener{
 					updateMultiversion();
 				}
 				
-			}
-			InputStream source = getResource("lang.yml");
-			Reader read = new InputStreamReader(source);
-			FileConfiguration langcfg = YamlConfiguration.loadConfiguration(read);
-			if (lang.getKeys(true) != langcfg.getKeys(true)) {
-				try {
-					langcfg.save(language);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				lang = YamlConfiguration.loadConfiguration(language);
-			}
-			try {
-				read.close();
-			} catch (IOException e1) {
-				e1.printStackTrace();
-			}
-			try {
-				source.close();
-			} catch (IOException e1) {
-				e1.printStackTrace();
 			}
 			if (cfg.getConfigurationSection("Shop") == null) {
 				cfg.set("Shop.jsdkgldhfvbermnldsagvzjrabdhgvajvbh", "temporaryvalue");
@@ -188,11 +190,11 @@ public class main extends JavaPlugin implements Listener{
 			Methods.print("|                     |",true,"" + ChatColor.AQUA);
 			Methods.print("|---------------------|",true,"" + ChatColor.AQUA);
 			if (alert) {
-				Methods.print(Methods.getLang("smactive"),true,"" + ChatColor.DARK_RED);
+				Methods.print("save mode active",true,"" + ChatColor.DARK_RED);
 			} else {
-				Methods.print(Methods.getLang("sminactive"),true,"" + ChatColor.DARK_GREEN);
+				Methods.print("save mode inactive",true,"" + ChatColor.DARK_GREEN);
 			}
-			if (getVersion().equalsIgnoreCase("v1_9_R2") || getVersion().equalsIgnoreCase("v1_9_R1") || getVersion().equalsIgnoreCase("v1_8_R3")) {
+			if (getVersion().equalsIgnoreCase("v1_9_R2") || getVersion().equalsIgnoreCase("v1_9_R1") || getVersion().equalsIgnoreCase("v1_10_R1")) {
 				Methods.print("Multiversion Support enabled for " + getVersion(), false, ChatColor.GREEN + "");
 			} else {
 				Methods.print("Detected Version " + getVersion() + ". This is not Compatible with this plugin!", false, ChatColor.RED + "");
@@ -210,12 +212,12 @@ public class main extends JavaPlugin implements Listener{
 								}
 							}
 							if (getConfig().getBoolean("clearLagBroadcast")) {
-								Bukkit.broadcastMessage("[TMods Server Utils] clearLag " + Methods.getLang("complete"));
+								Bukkit.broadcastMessage("[TMods Server Utils] clearLag complete");
 							}
 							clearLag = 0;
 						} else {
 							if (getConfig().getBoolean("clearLagBroadcast")) {
-								Bukkit.broadcastMessage("[TMods Server Utils] clearLag in " + getConfig().getInt("clearCooldown") / 2  + " " + Methods.getLang("seconds"));
+								Bukkit.broadcastMessage("[TMods Server Utils] clearLag in " + getConfig().getInt("clearCooldown") / 2  + " seconds");
 							}
 							clearLag += 1;
 						}
@@ -321,34 +323,34 @@ public class main extends JavaPlugin implements Listener{
 	
 	@Override
 	public void onDisable() {
-		try {
-			cfg.save(file);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 		Bukkit.getScheduler().cancelTasks(this);
+		if (sql != null) {
+			if (sql.isConnected()) {
+				sql.close();
+			}
+		}
 	}
 	
 	@EventHandler
 	public void onInteract(PlayerInteractEvent event) {
-		if(!event.getPlayer().hasPermission("ServerUtils.build")) {
-			event.setCancelled(true);
-		} else {
-			if (getVersion().equalsIgnoreCase("v1_9_R1")) {
-				if (getConfig().getBoolean("BlockChorusFruit")) {
-					if(Methods.hasChorusFruit(event.getPlayer())) {
-						event.setCancelled(true);
+		try {
+			if(!event.getPlayer().hasPermission("ServerUtils.build")) {
+				event.setCancelled(true);
+			} else {
+				if (getVersion().equalsIgnoreCase("v1_9_R1")) {
+					if (getConfig().getBoolean("BlockChorusFruit")) {
+						if(Methods.hasChorusFruit(event.getPlayer())) {
+							event.setCancelled(true);
+						}
 					}
 				}
 			}
-		}
-		if (Methods.getItemInHand(event.getPlayer()) != null) {
-			ItemStack is = Methods.getItemInHand(event.getPlayer());
-			if (is.hasItemMeta() && is.getType() == Material.PAPER) {
-				ItemMeta m = is.getItemMeta();
-				if (m.getLore().size() == 3) {
-					if (new String(Base64.getDecoder().decode(m.getLore().get(1))).equalsIgnoreCase(event.getPlayer().getUniqueId().toString())) {
-						cfg.set(event.getPlayer().getUniqueId().toString() + ".money", (cfg.getInt(event.getPlayer().getUniqueId().toString() + ".money") + Integer.valueOf(m.getLore().get(2))));
+			if (Methods.getItemInHand(event.getPlayer()) != null) {
+				ItemStack is = Methods.getItemInHand(event.getPlayer());
+				if (is.hasItemMeta() && is.getType() == Material.PAPER) {
+					ItemMeta m = is.getItemMeta();
+					if (m.getLore().size() == 1) {
+						cfg.set(event.getPlayer().getUniqueId().toString() + ".money", (cfg.getInt(event.getPlayer().getUniqueId().toString() + ".money") + Integer.valueOf(m.getLore().get(0).replace("§0", ""))));
 						if (is.getAmount() < 2) {
 							is = null;
 						} else {
@@ -363,6 +365,8 @@ public class main extends JavaPlugin implements Listener{
 					}
 				}
 			}
+		} catch (Exception e) {
+			Methods.log(e);
 		}
 	}
 	
@@ -378,7 +382,7 @@ public class main extends JavaPlugin implements Listener{
 		try {
 			if (event.getInventory().getTitle().contains("RC >> ")) {
 				if (event.getInventory().getItem(16) == null) {
-					event.getPlayer().sendMessage(Methods.getLang("rcoutputneeded"));
+					event.getPlayer().sendMessage("you need an output!");
 					return;
 				}
 				cfg.set("Recipes." + event.getInventory().getTitle().split(">> ")[1] + ".output", event.getInventory().getItem(16));
@@ -398,7 +402,7 @@ public class main extends JavaPlugin implements Listener{
 				}
 				if (event.getInventory().getItem(16) != null) {
 					Methods.loadRecipe("Recipes." + event.getInventory().getTitle().split(">> ")[1]);
-					event.getPlayer().sendMessage(Methods.getLang("rccreated"));
+					event.getPlayer().sendMessage("recipe created!");
 				}
 			}
 		} catch (Exception e) {
@@ -416,9 +420,9 @@ public class main extends JavaPlugin implements Listener{
 					im.setDisplayName(cfg.getString("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".names." + event.getRawSlot()));
 					is.setItemMeta(im);
 					event.getWhoClicked().getInventory().addItem(is);
-					event.getWhoClicked().sendMessage(Methods.getLang("yhp1") + " " + cfg.getInt("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".cost." + event.getRawSlot()) + "$ " + Methods.getLang("yhp2") + " " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getAmount() + " " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getType().toString() + " " + Methods.getLang("yhp3"));
+					event.getWhoClicked().sendMessage("you have paid " + cfg.getInt("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".cost." + event.getRawSlot()) + "$ for " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getAmount() + " " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getType().toString() + ".");
 					if (Bukkit.getPlayer(cfg.getString("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".owner")).isOnline()) {
-						Bukkit.getPlayer(cfg.getString("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".owner")).sendMessage(Methods.getLang("yhr1") + " " + cfg.getInt("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".cost." + event.getRawSlot()) + "$ " + Methods.getLang("yhr2") + " " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getAmount() + " " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getType().toString() + " " + Methods.getLang("yhr3"));
+						Bukkit.getPlayer(cfg.getString("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".owner")).sendMessage("you have received " + cfg.getInt("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".cost." + event.getRawSlot()) + "$ for " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getAmount() + " " + cfg.getItemStack("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory." + event.getRawSlot()).getType().toString() + ".");
 					}
 					cfg.set(Bukkit.getPlayer(cfg.getString("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".owner")).getUniqueId() + ".money", Math.addExact(cfg.getInt(Bukkit.getPlayer(cfg.getString("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".owner")).getUniqueId() + ".money"), cfg.getInt("Shop." + event.getInventory().getTitle().split(">> ")[1] +  ".cost." + event.getRawSlot())));
 					cfg.set(event.getWhoClicked().getUniqueId() + ".money", Math.subtractExact(cfg.getInt(event.getWhoClicked().getUniqueId() + ".money"), cfg.getInt("Shop." + event.getInventory().getTitle().split(">> ")[1] +  ".cost." + event.getRawSlot())));
@@ -426,7 +430,7 @@ public class main extends JavaPlugin implements Listener{
 					cfg.set("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".cost." + event.getRawSlot(), 999999999);
 					if (cfg.getConfigurationSection("Shop." + event.getInventory().getTitle().split(">> ")[1] + ".inventory").getKeys(false).size() < 1) {
 						cfg.set("Shop." + event.getInventory().getTitle().split(">> ")[1], null);
-						Bukkit.broadcastMessage(Methods.getLang("tsc1") + " " + event.getInventory().getTitle().split(">> ")[1] + " " + Methods.getLang("tsc2"));
+						Bukkit.broadcastMessage("the shop " + event.getInventory().getTitle().split(">> ")[1] + " has closed.");
 					}
 					try {
 						cfg.save(file);
@@ -458,9 +462,8 @@ public class main extends JavaPlugin implements Listener{
 	public void onPing(ServerListPingEvent event) {
 		if (alert) {
 		event.setMaxPlayers(0);
-		event.setMotd("§4§l§n" + Methods.getLang("smm"));
+		event.setMotd("§4§l§n" + "Server in Save mode.");
 		}
-
 	}
 	
 	@EventHandler
@@ -476,7 +479,7 @@ public class main extends JavaPlugin implements Listener{
 	public void onMove(PlayerMoveEvent e) {
 		try {
 		if (spawnTeleport.containsKey(e.getPlayer()) && e.getFrom().getX() != e.getTo().getX() && e.getFrom().getZ() != e.getTo().getZ()) {
-			e.getPlayer().sendMessage("teleportation aborted.");
+			e.getPlayer().sendMessage("teleport aborted.");
 			Bukkit.getScheduler().cancelTask(spawnTeleport.get(e.getPlayer()));
 			spawnTeleport.remove(e.getPlayer());
 		}
@@ -494,14 +497,14 @@ public class main extends JavaPlugin implements Listener{
 			}
 			if (alert) {
 				if(!event.getPlayer().hasPermission("ServerUtils.joinOnSecure")) {
-					event.getPlayer().kickPlayer("§4§l§n" + Methods.getLang("smjoindeny"));
+					event.getPlayer().kickPlayer("§4§l§n" + "you don't have permission to join.");
 					Methods.print("Player tried to join without permission",true,"" + ChatColor.DARK_RED);
 				}
 			}
 			Methods.print("Player " + event.getPlayer().getName() + " has joined with effective permissions:",true,"" + ChatColor.AQUA);
 			if (event.getPlayer().isOp()) {
 				Methods.print("OPERATOR",false,"" + ChatColor.DARK_RED);
-				event.setJoinMessage(ChatColor.DARK_RED + Methods.getLang("opjoin1") + " " + event.getPlayer().getName() + " " + Methods.getLang("opjoin2"));
+				event.setJoinMessage(ChatColor.DARK_RED + "the operator " + event.getPlayer().getName() + " has joined the game.");
 			} else {
 				for(PermissionAttachmentInfo s:event.getPlayer().getEffectivePermissions()) {
 					Methods.print("permission: " + s.getPermission(),false,"" + ChatColor.AQUA);
@@ -531,14 +534,18 @@ public class main extends JavaPlugin implements Listener{
 	}
 	@EventHandler 
 	public void onDrop(PlayerDropItemEvent e) {
-		if (e.getItemDrop().getItemStack().hasItemMeta() && e.getItemDrop().getItemStack().getType() == Material.PAPER) {
-			ItemMeta m = e.getItemDrop().getItemStack().getItemMeta();
-			if (m.getLore().size() == 3) {
-				if (m.getDisplayName().equalsIgnoreCase("Money")) {
-					e.setCancelled(true);
-					e.getItemDrop().remove();
+		try {
+			if (e.getItemDrop().getItemStack().hasItemMeta() && e.getItemDrop().getItemStack().getType() == Material.PAPER) {
+				ItemMeta m = e.getItemDrop().getItemStack().getItemMeta();
+				if (m.getLore().size() == 1) {
+					if (m.getDisplayName().equalsIgnoreCase("Money")) {
+						e.setCancelled(true);
+						e.getItemDrop().remove();
+					}
 				}
 			}
+		} catch (Exception e1) {
+			Methods.log(e1);
 		}
 	}
 	@SuppressWarnings("deprecation")
@@ -547,7 +554,7 @@ public class main extends JavaPlugin implements Listener{
 		try {
 			if (cmd.getName().equalsIgnoreCase("money")) {
 				if (!sender.hasPermission("ServerUtils.economy.money")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 				if (args.length != 1) {
@@ -557,7 +564,7 @@ public class main extends JavaPlugin implements Listener{
 				try{
 					amount = Integer.valueOf(args[0]);
 				} catch(Exception e) {
-					sender.sendMessage(args[0] + " is not a valid number!");
+					sender.sendMessage(args[0] + " is not a valid number");
 					return true;
 				}
 				if (sender instanceof Player) {
@@ -572,7 +579,7 @@ public class main extends JavaPlugin implements Listener{
 					is.setItemMeta(m);
 					((Player) sender).getInventory().addItem(is);
 				} else {
-					sender.sendMessage("You're not a player!");
+					sender.sendMessage("you're not a player!");
 				}
 				cfg.save(file);
 				return true;
@@ -582,7 +589,7 @@ public class main extends JavaPlugin implements Listener{
 					return true;
 				}
 				if (!sender.hasPermission("ServerUtils.mail")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 				if (args.length < 2) {
@@ -605,7 +612,7 @@ public class main extends JavaPlugin implements Listener{
 				mb.save(new File("plugins/TModsServerUtils/mail",Bukkit.getOfflinePlayer(args[0]).getUniqueId().toString() + ".plm"));
 				Methods.setItemInHand((Player) sender, null);
 				if (Bukkit.getPlayer(args[0]) != null) {
-					Bukkit.getPlayer(args[0]).sendMessage("You've got a new mail from " + sender.getName());
+					Bukkit.getPlayer(args[0]).sendMessage("You've got a mail from " + sender.getName());
 				}
 				return true;
 			}
@@ -614,11 +621,17 @@ public class main extends JavaPlugin implements Listener{
 					return true;
 				}
 				if (!sender.hasPermission("ServerUtils.mail")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 				if (args.length != 1) {
 					return false;
+				}
+				try {
+					Integer.valueOf(args[0]);
+				} catch(Exception e) {
+					sender.sendMessage("Please input the number of the mail.");
+					return true;
 				}
 				MailBox mb = MailBox.getMailbox((Player) sender);
 				if (mb.inbox.size() < (Integer.valueOf(args[0])-1) || mb.inbox.get(Integer.valueOf(args[0])-1) == null) {
@@ -633,7 +646,7 @@ public class main extends JavaPlugin implements Listener{
 					return true;
 				}
 				if (!sender.hasPermission("ServerUtils.mail")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 				MailBox mb = MailBox.getMailbox((Player) sender);
@@ -681,13 +694,13 @@ public class main extends JavaPlugin implements Listener{
 								p.teleport(loc);
 							}
 						} else {
-							sender.sendMessage(Methods.getLang("nospawn"));
+							sender.sendMessage("there's no spawn set.");
 						}
 					} else {
 						sender.sendMessage("You're not a Player");
 					}
 				} else {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 				}
 				return true;
 			}
@@ -708,13 +721,13 @@ public class main extends JavaPlugin implements Listener{
 						sender.sendMessage("You're not a player!");
 					}
 				} else {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 				}
 				return true;
 			}
 			if (cmd.getName().equalsIgnoreCase("suban")) {
 				if (!sender.hasPermission("ServerUtils.suban")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 				if (args.length != 2) {
@@ -790,7 +803,7 @@ public class main extends JavaPlugin implements Listener{
 					return true;
 				}
 				if (!sender.hasPermission("ServerUtils.recipe")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 			}
@@ -807,17 +820,17 @@ public class main extends JavaPlugin implements Listener{
 				}
 				if (args.length == 2 && args[0].equalsIgnoreCase("create")) {
 					if (!sender.hasPermission("ServerUtils.economy.manageShop")) {
-						sender.sendMessage(Methods.getLang("permdeny"));
+						sender.sendMessage("You don't have access to that command.");
 						return true;
 					}
 					if (cfg.getConfigurationSection("Shop").getKeys(false).contains(args[1])) {
-						sender.sendMessage(Methods.getLang("saex"));
+						sender.sendMessage("this shop already exists!");
 						return true;
 					}
 					cfg.set("Shop." + args[1] + ".owner", sender.getName());
 					Block block = Bukkit.getPlayer(sender.getName()).getTargetBlock((Set<Material>)null, 200);
 					if (block.getType().toString() != "CHEST") {
-						sender.sendMessage(Methods.getLang("chestlook"));
+						sender.sendMessage("you need to be looking at a chest to create a shop.");
 						return true;
 					}
 					Chest chest = (Chest)((Block) block).getState();
@@ -835,10 +848,10 @@ public class main extends JavaPlugin implements Listener{
 					}
 					chest.getBlockInventory().clear();
 					chest.getBlock().breakNaturally();
-					sender.sendMessage(Methods.getLang("costtable1") + ": ");
+					sender.sendMessage("Begin of costtable" + ": ");
 					for (String s:cfg.getConfigurationSection("Shop." + args[1] + ".inventory").getKeys(false)) {
 						if (cfg.getItemStack("Shop." + args[1] + ".inventory." + s) != null) {
-							sender.sendMessage(Methods.getLang("costtable2") + " " + cfg.getItemStack("Shop." + args[1] + ".inventory." + s).getType().toString() + " * " + cfg.getItemStack("Shop." + args[1] + ".inventory." + s).getAmount() + " " + Methods.getLang("costtable3"));
+							sender.sendMessage("how much should" + " " + cfg.getItemStack("Shop." + args[1] + ".inventory." + s).getType().toString() + " * " + cfg.getItemStack("Shop." + args[1] + ".inventory." + s).getAmount() + " " + "cost?");
 							sender.sendMessage("Type /shop cost [shop] " + s + " [cost]");
 						}
 					}
@@ -849,12 +862,12 @@ public class main extends JavaPlugin implements Listener{
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
-					Bukkit.broadcastMessage(Methods.getLang("newshop") + " " + args[1]);
+					Bukkit.broadcastMessage("a new shop has been created!" + " " + args[1]);
 					return true;
 				}
 				if (args.length == 2 && args[0].equalsIgnoreCase("open")) {
 					if (!sender.hasPermission("ServerUtils.economy.buyShop")) {
-						sender.sendMessage(Methods.getLang("permdeny"));
+						sender.sendMessage("You don't have access to that command.");
 						return true;
 					}
 					if (cfg.getConfigurationSection("Shop").getKeys(false).contains(args[1])) {
@@ -874,17 +887,17 @@ public class main extends JavaPlugin implements Listener{
 						}
 						Bukkit.getPlayer(sender.getName()).openInventory(shop);
 					} else {
-						sender.sendMessage(Methods.getLang("shopnotfound"));
+						sender.sendMessage("this shop couldn't be found.");
 					}
 					return true;
 				}
 				if (args.length == 4 && args[0].equalsIgnoreCase("cost")) {
 					if (!sender.hasPermission("ServerUtils.economy.manageShop")) {
-						sender.sendMessage(Methods.getLang("permdeny"));
+						sender.sendMessage("You don't have access to that command.");
 						return true;
 					}
 					if (!sender.getName().equalsIgnoreCase(cfg.getString("Shop." + args[1] + ".owner"))) {
-						sender.sendMessage(Methods.getLang("notyourshop"));
+						sender.sendMessage("this is not your shop!");
 						sender.sendMessage("owner:" + cfg.getString("Shop." + args[1] + ".owner"));
 						sender.sendMessage("niyou:" + sender.getName());
 						return true;
@@ -898,10 +911,10 @@ public class main extends JavaPlugin implements Listener{
 						} catch (IOException e) {
 							e.printStackTrace();
 						}
-						Bukkit.broadcastMessage(Methods.getLang("pricechange1") + " all " + " " + Methods.getLang("pricechange2") + " " + args[3] + "$ " + Methods.getLang("pricechange3") + " " + args[1]);
+						Bukkit.broadcastMessage("The price for" + " all " + " " + "has been changed to" + " " + args[3] + "$ " + "in shop" + " " + args[1]);
 						return true;
 					}
-					Bukkit.broadcastMessage(Methods.getLang("pricechange1") + " " + cfg.getItemStack("Shop." + args[1] + ".inventory." + args[2]).getType().toString() + " " + Methods.getLang("pricechange2") + " " + args[3] + "$ " + Methods.getLang("pricechange3") + " " + args[1]);
+					Bukkit.broadcastMessage("The price for" + " " + cfg.getItemStack("Shop." + args[1] + ".inventory." + args[2]).getType().toString() + " " + "has been changed to" + " " + args[3] + "$ " + "in shop" + " " + args[1]);
 					cfg.set("Shop." + args[1] + ".cost." + args[2], Integer.valueOf(args[3]));
 					try {
 						cfg.save(file);
@@ -914,15 +927,15 @@ public class main extends JavaPlugin implements Listener{
 			}
 			if (cmd.getName().equalsIgnoreCase("bal") && sender instanceof Player) {
 				if (!sender.hasPermission("ServerUtils.economy.bal")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
-				sender.sendMessage(Methods.getLang("bal") + ": " + cfg.getInt(Bukkit.getPlayer(sender.getName()).getUniqueId() + ".money"));
+				sender.sendMessage("Your Money" + ": " + cfg.getInt(Bukkit.getPlayer(sender.getName()).getUniqueId() + ".money"));
 				return true;
 			}
 			if (cmd.getName().equalsIgnoreCase("pay") && sender instanceof Player && args.length == 2) {
 				if (!sender.hasPermission("ServerUtils.economy.pay")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 				if (Bukkit.getPlayer(args[0]) instanceof Player) {
@@ -935,26 +948,32 @@ public class main extends JavaPlugin implements Listener{
 							} catch (IOException e) {
 								e.printStackTrace();
 							}
-							sender.sendMessage(args[1] + "$ " +  Methods.getLang("paid"));
-							Bukkit.getPlayer(args[0]).sendMessage(args[1] + "$ " + Methods.getLang("gotpaid1") + " " + sender.getName() + " " + Methods.getLang("gotpaid2"));
+							sender.sendMessage(args[1] + "$ " +  "paid.");
+							Bukkit.getPlayer(args[0]).sendMessage(args[1] + "$ " + "got from" + " " + sender.getName()+ ".");
 						} else {
-							sender.sendMessage(Methods.getLang("nemoney"));
+							sender.sendMessage("not enough money!");
 						}
 					} else {
-						sender.sendMessage(Methods.getLang("cbpaid"));
+						sender.sendMessage("The money must be greater than 0");
 					}
 				} else {
-					sender.sendMessage(Methods.getLang("notonline"));
+					sender.sendMessage("This player is not online.");
 				}
 				return true;
 			}
 			if (cmd.getName().equalsIgnoreCase("setMoney") && args.length == 2) {
 				if (!sender.hasPermission("ServerUtils.economy.set")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
-				if (args[1].length() > 9) {
-					sender.sendMessage("The given number must be between 0 and 999,999,999");
+				boolean valid = true;
+				try {
+					Integer.valueOf(args[1]);
+				} catch (Exception e) {
+					valid = false;
+				}
+				if (valid) {
+					sender.sendMessage(args[1] + " is not a valid number!");
 					return true;
 				} else {
 					if (Integer.valueOf(args[1]) < 0) {
@@ -972,7 +991,7 @@ public class main extends JavaPlugin implements Listener{
 					sender.sendMessage("Money of " + args[0] + " set to " + args[1] + "$.");
 					return true;
 				} else {
-					sender.sendMessage(Methods.getLang("notonline"));
+					sender.sendMessage("This player is not online.");
 				}
 			}
 			if (cmd.getName().equalsIgnoreCase("inv") && sender.hasPermission("ServerUtils.inv") && args.length == 1 && Bukkit.getPlayer(sender.getName()) != null) {
@@ -989,7 +1008,7 @@ public class main extends JavaPlugin implements Listener{
 			}
 			if (cmd.getName().equalsIgnoreCase("trash") && sender instanceof Player) {
 				if (!sender.hasPermission("ServerUtils.trash")) {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 					return true;
 				}
 				Inventory inv = Bukkit.createInventory(Bukkit.getPlayer(sender.getName()), 18,"Trash");
@@ -1003,7 +1022,7 @@ public class main extends JavaPlugin implements Listener{
 				}
 				if (args.length == 1) {
 					if (args[0].equalsIgnoreCase("list")) {
-						sender.sendMessage("------- " + Methods.getLang("homeof") + sender.getName() + " -------");
+						sender.sendMessage("------- " + "home of" + sender.getName() + " -------");
 						if (cfg.getConfigurationSection(((Player) sender).getUniqueId() + ".home") != null) {
 							if (cfg.getConfigurationSection(((Player) sender).getUniqueId() + ".home").getKeys(false).size() > 0) {
 								for(String s:cfg.getConfigurationSection(Bukkit.getPlayer(sender.getName()).getUniqueId() + ".home").getKeys(false)) {
@@ -1017,14 +1036,14 @@ public class main extends JavaPlugin implements Listener{
 						if (sender.hasPermission("ServerUtils.multihome")) {
 							home = args[0];
 						} else {
-							sender.sendMessage(Methods.getLang("mhdeny"));
+							sender.sendMessage("You don't have access to multiple homes!");
 							return true;
 						}
 					}
 				}
 				if (args.length == 2 && args[0].equalsIgnoreCase("delete")){
 					cfg.set(Bukkit.getPlayer(sender.getName()).getUniqueId() + ".home." + args[1], null);
-					sender.sendMessage(Methods.getLang("delhome"));
+					sender.sendMessage("home deleted.");
 					try {
 						cfg.save(file);
 					} catch (IOException e) {
@@ -1042,7 +1061,7 @@ public class main extends JavaPlugin implements Listener{
 				if (x != 0 && y != 0 && z != 0) {
 					Bukkit.getPlayer(sender.getName()).teleport(new Location(Bukkit.getPlayer(sender.getName()).getWorld(),x,y,z,jaw,0));
 				} else {
-					sender.sendMessage(Methods.getLang("notfoundh"));
+					sender.sendMessage("home not found");
 					return false;
 				}
 				return true;
@@ -1070,7 +1089,7 @@ public class main extends JavaPlugin implements Listener{
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
-				sender.sendMessage(Methods.getLang("sethome"));
+				sender.sendMessage("home set.");
 				return true;
 			}
 			if (cmd.getName().equalsIgnoreCase("e")){
@@ -1078,38 +1097,38 @@ public class main extends JavaPlugin implements Listener{
 					if (alert) {
 						alert = false;
 						getConfig().set("alert",false);
-						sender.sendMessage(ChatColor.GREEN + Methods.getLang("deacsave"));
+						sender.sendMessage(ChatColor.GREEN + "save mode deactivated");
 						saveConfig();
 					} else {
 						alert = true;
 						getConfig().set("alert",true);
-						sender.sendMessage(ChatColor.DARK_RED + Methods.getLang("acsave"));
+						sender.sendMessage(ChatColor.DARK_RED + "save mode activated");
 						saveConfig();
 						Collection<? extends Player> online = Bukkit.getOnlinePlayers();
 						for(Player p:online) {
 							if (!p.hasPermission("ServerUtils.joinOnSecure")) {
-								p.kickPlayer(Methods.getLang("savekick"));
+								p.kickPlayer("The save mode of this server was activated");
 							}
 						}
 					}
 					return true;
 				} else {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 				}
 			}
 			if (cmd.getName().equalsIgnoreCase("bp") && sender instanceof Player) {
 				if (sender.hasPermission("ServerUtils.backpack")) {
 					sender.getServer().getPlayer(sender.getName()).openInventory(sender.getServer().getPlayer(sender.getName()).getEnderChest());
 				} else {
-					sender.sendMessage(Methods.getLang("permdeny"));
+					sender.sendMessage("You don't have access to that command.");
 				}
 				return true;
 			}
 			if (cmd.getName().equalsIgnoreCase("getalert")) {
 				if (alert) {
-					sender.sendMessage(Methods.getLang("smactive"));
+					sender.sendMessage("save mode is active");
 				} else {
-					sender.sendMessage(Methods.getLang("sminactive"));
+					sender.sendMessage("save mode is inactive");
 				}
 				return true;
 			}

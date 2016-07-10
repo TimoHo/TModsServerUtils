@@ -15,14 +15,10 @@ import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 
 public class permission implements CommandExecutor, Listener{
-
-	
 	private main plugin;
-
 	public permission(main plugin) {
 		this.plugin = plugin;
 	}
-	
 	@EventHandler
 	public void onJoin(PlayerJoinEvent e){
 		PermissionAttachment attachment = e.getPlayer().addAttachment(plugin);
@@ -30,7 +26,6 @@ public class permission implements CommandExecutor, Listener{
 			attachment.setPermission(per, true);
 		}
 	}
-	
 	public void onEnable(){
 		for(Player p : Bukkit.getOnlinePlayers()){
 			PermissionAttachment attachment = p.addAttachment(plugin);
@@ -39,8 +34,6 @@ public class permission implements CommandExecutor, Listener{
 			}
 		}
 	}
-
-	
 	@SuppressWarnings("deprecation")
 	@Override
 	public boolean onCommand(CommandSender p, Command cmd, String label, String[] args) {
@@ -55,7 +48,7 @@ public class permission implements CommandExecutor, Listener{
 				}
 				return true;
 			}else{
-				p.sendMessage(Methods.getLang("permerr"));
+				p.sendMessage("This player is not online or you don't have permission to do that.");
 			}
 		}
 		if(args.length == 3 && p.hasPermission("ServerUtils.Permissions.manage")) {
@@ -75,11 +68,11 @@ public class permission implements CommandExecutor, Listener{
 					}
 					PermissionAttachment attachment = target.addAttachment(plugin);
 					attachment.setPermission(args[2], true);
-					p.sendMessage(Methods.getLang("padd1") + " " + args[2] + " " + Methods.getLang("padd2") + " " + args[1] + " " + Methods.getLang("padd3"));
-					target.sendMessage(Methods.getLang("pgot1") + " " + args[2] + " " + Methods.getLang("pgot2"));
+					p.sendMessage("The permission" + " " + args[2] + " " + "was added to" + " " + args[1] + ".");
+					target.sendMessage("You got the permission" + " " + args[2] + ".");
 
 				}else{
-					p.sendMessage(Methods.getLang("notonline"));
+					p.sendMessage("This player is not online!");
 				}
 			}
 			if (args[0].equalsIgnoreCase("remove")) {
@@ -92,10 +85,10 @@ public class permission implements CommandExecutor, Listener{
 						Perm.remove(args[2]);
 						PermissionAttachment attachment = target.addAttachment(plugin);
 						attachment.setPermission(args[2], false);
-						p.sendMessage(Methods.getLang("padd1") + " " + args[2] + Methods.getLang("pdel2") + " " + args[1] + " " +  Methods.getLang("pdel3"));
-						target.sendMessage(Methods.getLang("prem1") + " " + args[2] + " " + Methods.getLang("prem2"));
+						p.sendMessage("The permission" + " " + args[2] + " was removed from " + args[1] + ".");
+						target.sendMessage("The permission" + " " + args[2] + " " + "was removed from you.");
 					} else {
-						p.sendMessage(Methods.getLang("pnotgot"));
+						p.sendMessage("This player hasn't got this permission.");
 					}
 
 					main.cfg.set(target.getUniqueId() + ".Permissions.List", Perm);
@@ -107,7 +100,7 @@ public class permission implements CommandExecutor, Listener{
 
 
 				}else{
-					p.sendMessage(Methods.getLang("notonline"));
+					p.sendMessage("this player is not online.");
 				}
 			}
 			

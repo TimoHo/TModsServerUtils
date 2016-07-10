@@ -1,6 +1,5 @@
 package me.tmods.serverutils;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -11,6 +10,7 @@ import java.util.zip.ZipInputStream;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.craftbukkit.libs.jline.internal.InputStreamReader;
@@ -19,9 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.ShapedRecipe;
 
-import me.tmods.api.Particle;
-import me.tmods.api.Sound;
-import me.tmods.serverutils.multiversion.v18r3;
+import me.tmods.serverutils.multiversion.v110r1;
 import me.tmods.serverutils.multiversion.v19r1;
 import me.tmods.serverutils.multiversion.v19r2;
 
@@ -31,6 +29,8 @@ public class Methods {
 			return v19r1.hasChorusFruit(p);
 		} else if (main.getVersion() == "v1_9_R2") {
 			return v19r2.hasChorusFruit(p);
+		} else if (main.getVersion() == "v1_10_R1") {
+			return v110r1.hasChorusFruit(p);
 		}
 		return false;
 	}
@@ -52,7 +52,7 @@ public class Methods {
 		return null;
 	}
 	public static void log(Exception e) {
-		if (main.getVersion().equalsIgnoreCase("v1_9_R1") || main.getVersion().equalsIgnoreCase("v1_8_R3") || main.getVersion().equalsIgnoreCase("v1_9_R2")) {
+		if (main.getVersion().equalsIgnoreCase("v1_9_R1") || main.getVersion().equalsIgnoreCase("v1_10_R1") || main.getVersion().equalsIgnoreCase("v1_9_R2")) {
 			main.s.log(e);
 			e.printStackTrace();
 			print("This error was sent to the developer with following information: ",false,ChatColor.RED + "");
@@ -60,97 +60,83 @@ public class Methods {
 			print("ServerUtilsVersion " + main.s.get().getCodeVersion(),false,ChatColor.RED + "");
 		} else {
 			e.printStackTrace();
-			print("Your server's version is outdated! please use v1_9_R1 or v1_8_R3!",false,ChatColor.RED + "");
+			print("Your server's version is outdated! please use v1_9_R1, v1_9_R2 or v1_10_R1!",false,ChatColor.RED + "");
+			print("Your version: " + main.getVersion(),false,ChatColor.RED + "");
 		}
 	}
-	public static String getLang(String key) {
-		return main.lang.getString(YamlConfiguration.loadConfiguration(new File("plugins/TModsServerUtils","config.yml")).getString("language") + "." + key);
-	}
 	public static List<EntityType> getAnimals() {
-		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			return v18r3.getAnimals();
+		if (main.getVersion().equalsIgnoreCase("v1_10_R1")) {
+			return v110r1.getAnimals();
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
 			return v19r1.getAnimals();
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
 			return v19r2.getAnimals();
 		} else {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_10_R1, v1_9_R1 or v1_9_R2");
 		}
 		return null;
 	}
 	public static List<EntityType> getMobs() {
-		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			return v18r3.getMobs();
+		if (main.getVersion().equalsIgnoreCase("v1_10_R1")) {
+			return v110r1.getMobs();
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
 			return v19r1.getMobs();
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
 			return v19r2.getMobs();
 		} else {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_10_R1, v1_9_R1 or v1_9_R2");
 		}
 		return null;
 	}
 	public static void changeChestState(Location loc,boolean open) {
-		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			v18r3.changeChestState(loc, open);
+		if (main.getVersion().equalsIgnoreCase("v1_10_R1")) {
+			v110r1.changeChestState(loc, open);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
 			v19r1.changeChestState(loc, open);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
 			v19r2.changeChestState(loc, open);
 		} else {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_10_R1, v1_9_R1 or v1_9_R2");
 		}
 	}
 	public static void setItemInHand(Player p,ItemStack item) {
-		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			v18r3.setItemInHand(p,item);
+		if (main.getVersion().equalsIgnoreCase("v1_10_R1")) {
+			v110r1.setItemInHand(p,item);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
 			v19r1.setItemInHand(p,item);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
 			v19r2.setItemInHand(p, item);
 		} else {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_10_R1, v1_9_R1 or v1_9_R2");
 		}
 	}
 	public static ItemStack getItemInHand(Player p) {
-		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			return v18r3.getItemInHand(p);
+		if (main.getVersion().equalsIgnoreCase("v1_10_R1")) {
+			return v110r1.getItemInHand(p);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
 			return v19r1.getItemInHand(p);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
 			return v19r2.getItemInHand(p);
 		} else {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_10_R1, v1_9_R1 or v1_9_R2");
 		}
 		return null;
 	}
-	public static void playSound(Sound s,Location loc,Player p) {
-		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			v18r3.playSound(s,loc,p);
-		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
-			v19r1.playSound(s,loc,p);
-		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
-			v19r2.playSound(s,loc,p);
-		} else {
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
-		}
-	}
 	public static void playEffect(Location loc,Particle p,float f,int amount,boolean showDistance) {
-		if (main.getVersion().equalsIgnoreCase("v1_8_R3")) {
-			v18r3.playEffect(loc, p, f, amount, showDistance);
+		if (main.getVersion().equalsIgnoreCase("v1_10_R1")) {
+			v110r1.playEffect(loc, p, f, amount, showDistance);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R1")) {
 			v19r1.playEffect(loc, p, f, amount, showDistance);
 		} else if (main.getVersion().equalsIgnoreCase("v1_9_R2")) {
 			v19r2.playEffect(loc, p, f, amount, showDistance);
 		} else {
 			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "You have not installed one of the compatible versions for TModsServerUtils!");
-			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_8_R3, v1_9_R1 or v1_9_R2");
+			Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "Please use v1_10_R1, v1_9_R1 or v1_9_R2");
 		}
 	}
 	
